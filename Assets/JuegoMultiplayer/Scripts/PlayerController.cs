@@ -5,6 +5,16 @@ using Unity.Netcode;
 public class PlayerController : NetworkBehaviour
 {
     Camera playerCamera;
+
+    [Header("Weapon")]
+    public GameObject ProjectilPrefab;
+    //punto donde aparece o se spawnea el proyectil
+    public Transform WeaponSocket;
+    public float WeaponCadence = 2;
+    float lastShoutTimer = 0; //Vuelve a esperar el tiempo para volver a disparar
+    public bool FullAuto;
+
+
     [Header("Camera vars")]
     public Vector3 CameraOffset = new (0,2.5f,-2);
 
@@ -19,9 +29,9 @@ public class PlayerController : NetworkBehaviour
     public AudioClip DamageSound;
     public AudioClip AttackSound;
 
-    [Header("HUD")]
-    public RectTransform HUD;
-    public TMPro.TextMeshPro labelHealth;
+    //[Header("HUD")]
+    //public RectTransform HUD;
+    //public TMPro.TextMeshPro labelHealth;
 
     void Start()
     {
@@ -30,7 +40,7 @@ public class PlayerController : NetworkBehaviour
         if(IsOwner)
         {
             //HUD = GameObject.Find
-            HUD.gameObject.SetActive(true);
+            //HUD.gameObject.SetActive(true);
         }
     }
 
@@ -58,6 +68,25 @@ public class PlayerController : NetworkBehaviour
                 {
                     transform.position += new Vector3(1 * Time.deltaTime, 0, 0);
                 }
+
+                //disparo
+                if(FullAuto)
+                {
+                    if (Input.GetButton("Fire1"))
+                    {
+                        FireWeaponRpc();
+                    }
+                }
+                else
+                {
+                    if (Input.GetButtonDown("Fire1"))
+                    {
+                        FireWeaponRpc();
+                    }
+                }
+
+
+
             }
       
             //Solo modificamos la cámara si el jugador es el owner
@@ -65,9 +94,15 @@ public class PlayerController : NetworkBehaviour
             playerCamera.transform.LookAt(transform.position);
 
             //Label con la salud
-            labelHealth.text = "" + Health.Value;
+            //labelHealth.text = "" + Health.Value;
 
         }
+
+        if (IsServer)
+        {
+            lastShoutTimer += Time.deltaTime;
+        }
+
     }
 
     bool insideDamageVolume;
@@ -108,6 +143,30 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    //disparar el arma
+    [Rpc(SendTo.Server)]
+    public void FireWeaponRpc()
+    {
+        //Si no ha poasado el tiempo para volver a disparar, retornar
+        if (lastShoutTimer < (60/WeaponCadence)) return;
+
+
+        //instanciar un proyectil y dispararlo
+        if(ProjectilPrefab != null)
+        {
+            GameObject go = Instantiate(ProjectilPrefab, WeaponSocket.position, WeaponSocket.rotation);
+            Projectile proj = go.GetComponent<Projectile>();
+            proj.direction = transform.forward;
+            proj.instigator = this;
+
+            //notificar la aparicion a los clientes
+            proj.GetComponent<NetworkObject>().Spawn();
+            lastShoutTimer = 0;
+
+        }
+    }
+
+
     //Llamada a procedimiento remoto para que el servidor calcule la nueva salud en base al danno
     [Rpc(SendTo.Server)]
     public void TakeDamageRpc(int amount)
@@ -116,7 +175,7 @@ public class PlayerController : NetworkBehaviour
         TakeDamage(amount);
     }
 
-    void TakeDamage(int damage)
+    public void TakeDamage(int damage)
     {
         if(IsAlive())
         {

@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1129778785325465908
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8204527399604160867}
+  m_Layer: 0
+  m_Name: WeaponSocket
+  m_TagString: Untagged
+  m_Icon: {fileID: 1206586993520771344, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8204527399604160867
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1129778785325465908}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.311, y: 0, z: 0.133}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8825831190773973700}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &80974466574295581
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -54,7 +85,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 8891244130364874969, guid: edeb5e205dc23fc438d8a0787f512b02, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8204527399604160867}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: edeb5e205dc23fc438d8a0787f512b02, type: 3}
       insertIndex: -1
@@ -161,10 +195,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  ProjectilPrefab: {fileID: 4706657461297892819, guid: 4881c0c1022df6a4197eb5836b80c668, type: 3}
+  WeaponSocket: {fileID: 8204527399604160867}
   CameraOffset: {x: 0, y: 2.5, z: -2}
   DeathSound: {fileID: 8300000, guid: 79e8f96dc20ca7342be8eac8b61245a7, type: 3}
-  DamageSound: {fileID: 0}
-  AttackSound: {fileID: 0}
+  DamageSound: {fileID: 8300000, guid: deedd70785de863449199eeb0834f03f, type: 3}
+  AttackSound: {fileID: 8300000, guid: deedd70785de863449199eeb0834f03f, type: 3}
+  HUD: {fileID: 0}
+  labelHealth: {fileID: 0}
 --- !u!54 &8377991472538262319
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -215,3 +253,8 @@ CapsuleCollider:
   m_Height: 0.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.4, z: 0}
+--- !u!4 &8825831190773973700 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8891244130364874969, guid: edeb5e205dc23fc438d8a0787f512b02, type: 3}
+  m_PrefabInstance: {fileID: 80974466574295581}
+  m_PrefabAsset: {fileID: 0}
