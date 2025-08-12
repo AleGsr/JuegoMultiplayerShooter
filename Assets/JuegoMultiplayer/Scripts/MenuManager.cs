@@ -15,19 +15,33 @@ public struct NamesData
 public class MenuManager : MonoBehaviour
 {
     public RectTransform mainMenu;
-    public RectTransform menu;
+    public RectTransform HUD;
     public TextMeshProUGUI labelHealth;
+    public TMP_Text templatePlayerlabel;
 
     public TMP_Dropdown dropdownNames;
-    List<string> allowedNames = new List<string>();
+    public List<string> allowedNames = new List<string>();
 
     public string API_URL = "http://monsterballgo.com/api/";
     public string ENDPOINT_NAMES = "names";
 
+    //retorna el indice en la lista de nombres permitidos que selecciono el usuario
+    public int selectedNameIndex
+    {
+        get
+        {
+            return dropdownNames.value;
+        }
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        HUD.gameObject.SetActive(false);
+        mainMenu.gameObject.SetActive(true);
         GetNames();
+
+        templatePlayerlabel.gameObject.SetActive(false);
     }
 
     // Update is called once per frame

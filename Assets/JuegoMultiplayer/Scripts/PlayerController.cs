@@ -1,6 +1,7 @@
 using System.Globalization;
 using UnityEngine;
 using Unity.Netcode;
+using TMPro;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -23,25 +24,59 @@ public class PlayerController : NetworkBehaviour
     //Primer parametro: valor inicial, permisos
     //Esta es una variable que puede leer cualquiera pero solo puede establecer (set) el servidor
     NetworkVariable<int> Health = new NetworkVariable<int>(100,NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    //id del nombre que escogio el jugador
+    NetworkVariable<int> nameId = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    //id del accesorio de la cabeza
+    NetworkVariable<int> hatId = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
 
     [Header("Sounds an FX")]
     public AudioClip DeathSound;
     public AudioClip DamageSound;
     public AudioClip AttackSound;
 
-    //[Header("HUD")]
-    //public RectTransform HUD;
-    //public TMPro.TextMeshPro labelHealth;
+    [Header("HUD")]
+    public MenuManager menuManager;
+
+    private TMP_Text playerLabel;
+
+
+    Animator animator;
+    Vector3 desiredDirection;
+    public float speed = 2;
+
 
     void Start()
     {
         playerCamera = Camera.main;
+        menuManager = GameObject.Find("GameManager").GetComponent<MenuManager>();
+        animator = GetComponent<Animator>();
 
-        if(IsOwner)
+        if (IsOwner)
         {
-            //HUD = GameObject.Find
-            //HUD.gameObject.SetActive(true);
+            //HUD = GameObject.Find("")
+            menuManager.HUD.gameObject.SetActive(true);
+
+            //establecer nombre y accesorios seleccionados
+            SetNameIDRpc(menuManager.selectedNameIndex);
         }
+
+        if(IsClient)
+        {
+            playerLabel = Instantiate(menuManager.templatePlayerlabel, menuManager.HUD).GetComponent<TMP_Text>();
+            playerLabel.gameObject.SetActive(true);
+
+        }
+
+
+    }
+
+
+    //establecer nombre, notificarle al servidor
+    [Rpc(SendTo.Server)]
+    public void SetNameIDRpc(int idx)
+    {
+        nameId.Value = idx;
     }
 
     // Update is called once per frame
@@ -49,8 +84,11 @@ public class PlayerController : NetworkBehaviour
     {
         if (IsOwner)
         {
+            desiredDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+            desiredDirection.Normalize();
+
             //solo debe moverse si esta vivo
-            if(IsAlive())
+            if (IsAlive())
             {
                 if (Input.GetKey(KeyCode.W))
                 {
@@ -69,8 +107,22 @@ public class PlayerController : NetworkBehaviour
                     transform.position += new Vector3(1 * Time.deltaTime, 0, 0);
                 }
 
+                float mag = desiredDirection.magnitude;
+                //en el animator debe existir un parametro isWalking para activar la animacion de movimiento
+                animator.SetBool("isWalking", mag > 0);
+                if (mag > 0)
+                {
+                    //interpolar entre la rotacion actual y la deseada
+                    Quaternion q = Quaternion.LookRotation(desiredDirection);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, q, Time.deltaTime * 10);
+                    //hay que declarar public float speed=2 mas arriba
+                    transform.Translate(0, 0, speed * Time.deltaTime);
+
+                }
+
+
                 //disparo
-                if(FullAuto)
+                if (FullAuto)
                 {
                     if (Input.GetButton("Fire1"))
                     {
@@ -94,7 +146,7 @@ public class PlayerController : NetworkBehaviour
             playerCamera.transform.LookAt(transform.position);
 
             //Label con la salud
-            //labelHealth.text = "" + Health.Value;
+            menuManager.labelHealth.text = "" + Health.Value;
 
         }
 
@@ -103,13 +155,21 @@ public class PlayerController : NetworkBehaviour
             lastShoutTimer += Time.deltaTime;
         }
 
+        if (IsClient)
+        {
+            playerLabel.text = menuManager.allowedNames[nameId.Value];
+            //posicion de la etiqueta cerca del jugador
+            playerLabel.transform.position = playerCamera.WorldToScreenPoint(transform.position 
+                + new Vector3(0,0.2f,0));
+        }
+
     }
 
     bool insideDamageVolume;
     float insideDVCounter = 0;
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("collision con " + other.name);
+        //Debug.Log("collision con " + other.name);
         DamageVolume dv = other.GetComponent<DamageVolume>();
         if(dv != null)
         {
@@ -191,8 +251,13 @@ public class PlayerController : NetworkBehaviour
             {
                 //Pos me muero
                 OnDeath();
+                animator.SetBool("Die", true);
             }
-            Debug.Log("health: " + Health);
+            else
+            {
+
+            }
+            //Debug.Log("health: " + Health);
         }
         
     }
@@ -204,8 +269,9 @@ public class PlayerController : NetworkBehaviour
         //particle.play
         //sound.play
         Debug.Log("Me muero XD");
-        GetComponent<AudioSource>(). clip = DeathSound;
-        GetComponent<AudioSource>(). Play();
+        
+        //GetComponent<AudioSource>(). clip = DeathSound;
+        //GetComponent<AudioSource>(). Play();
     }
 
     public bool IsAlive()
